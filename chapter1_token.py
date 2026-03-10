@@ -2,7 +2,7 @@
 Chapter 1: 토큰 발급 및 재사용 (OAuth Authentication)
 
 💡 [실습 0단계: 환경 설정]
-아래 코드를 실행하기 전, 반드시 같은 폴더 안에 `config.yaml` 이라는 이름의 
+아래 코드를 실행하기 전, 반드시 같은 폴더 안에 `config.yaml` 이라는 이름의
 설정 파일을 직접 생성하시고, 본인이 발급받은 실제 정보를 기입하셔야 합니다.
 
 ----- [아래 내용을 복사하여 config.yaml 파일에 붙여넣고 수정하세요] -----
@@ -35,83 +35,130 @@ ACNT_PRDT_CD: '01'
    4. 대부분의 KIS API는 헤더(Header)에 인증 정보를 넣지만, [토큰 발급 API]만 유일하게 본문(Body)에 키 데이터를 전송합니다.
 """
 
-import requests
 import json
-import time
 import os
+import time
+from datetime import datetime, timedelta, timezone
+import requests
 from config import APP_KEY, APP_SECRET, URL_BASE
 
-TOKEN_FILE = 'token.json'
+TOKEN_FILE = "token.json"
+KST = timezone(timedelta(hours=9))
 
-def get_access_token():
-    """앱키와 앱시크릿을 이용하여 24시간 유효한 접근 토큰을 발급받거나 기존 토큰을 재사용합니다."""
-    
-    # API 키 누락 확인
-    if not APP_KEY or not APP_SECRET:
-        print("❌ config.yaml에서 APP_KEY 또는 APP_SECRET을 찾을 수 없습니다.")
+
+def _parse_token_expiry(value):
+    """KST 만료 시각 문자열을 timestamp(초)로 바꿉니다."""
+    if value in (None, ""):
         return None
 
-    # Step 1: 디스크에 저장된 기존 토큰 재사용 (API 호출 횟수 절약 및 차단 방지)
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    try:
+        parsed = datetime.strptime(text, "%Y-%m-%d %H:%M:%S")
+        return parsed.replace(tzinfo=KST).timestamp()
+    except ValueError:
+        return None
+
+
+def _get_saved_token_expiry(saved_token):
+    """저장된 토큰 정보에서 만료 시각을 꺼냅니다."""
+    expires_at = _parse_token_expiry(saved_token.get("access_token_token_expired"))
+    if expires_at is not None:
+        return expires_at
+
+    return _parse_token_expiry(saved_token.get("expires_at"))
+
+
+def _format_expiry(expires_at):
+    """timestamp를 읽기 쉬운 KST 시각 문자열로 바꿉니다."""
+    if expires_at is None:
+        return "알 수 없음"
+    return datetime.fromtimestamp(expires_at, KST).strftime("%Y-%m-%d %H:%M:%S KST")
+
+
+def get_access_token():
+    """저장된 토큰을 재사용하고, 없거나 만료되면 새로 발급합니다."""
+    if not APP_KEY or not APP_SECRET:
+        print("config.yaml에서 APP_KEY 또는 APP_SECRET을 찾을 수 없습니다.")
+        return None
+
     if os.path.exists(TOKEN_FILE):
         try:
-            with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
+            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
                 saved_token = json.load(f)
-            
-            # 토큰 유효기간 확인 (재발급 기준: 만료 60초 전까지는 기존 토큰 사용)
-            expires_at = saved_token.get('expires_at', 0)
-            now = time.time()
-            
-            if now < expires_at - 60:
-                print("✅ 24시간이 지나지 않은 유효한 토큰이 발견되어 이를 재사용합니다.")
-                print(f"만료까지 남은 시간: {int(expires_at - now)}초")
-                return saved_token.get('access_token')
-            else:
-                print("⚠️ 저장된 토큰의 유효기간이 만료되었습니다. 새 토큰 발급이 필요합니다.")
-        except Exception as e:
-            print(f"⚠️ 토큰 파일을 읽는 중 문제가 발생했습니다: {e}")
 
-    # Step 2: 새 인증 토큰 발급 요청
+            expires_at = _get_saved_token_expiry(saved_token)
+            now = time.time()
+
+            # 만료 60초 전까지는 저장된 토큰을 그대로 사용합니다.
+            if expires_at is not None and now < expires_at - 60:
+                print("저장된 유효한 토큰을 재사용합니다.")
+                print(f"만료 시각: {_format_expiry(expires_at)}")
+                print(f"남은 시간: {int(expires_at - now)}초")
+                return saved_token.get("access_token")
+
+            print("저장된 토큰이 만료되었거나 만료 시각을 확인할 수 없어 새 토큰을 발급합니다.")
+        except Exception as e:
+            print(f"저장된 토큰 파일을 읽는 중 문제가 발생했습니다: {e}")
+
     headers = {"content-type": "application/json"}
     body = {
         "grant_type": "client_credentials",
         "appkey": APP_KEY,
-        "appsecret": APP_SECRET
+        "appsecret": APP_SECRET,
     }
-    
-    print(f"🔑 한국투자증권 서버에 새 토큰을 요청합니다... ({URL_BASE})")
+
+    print(f"한국투자증권 서버에 새 토큰을 요청합니다... ({URL_BASE})")
+
     try:
-        res = requests.post(f"{URL_BASE}/oauth2/tokenP", 
-                           headers=headers, 
-                           data=json.dumps(body))
-        
-        if res.status_code == 200:
-            data = res.json()
-            access_token = data['access_token']
-            expires_in = int(data['expires_in'])
-            
-            print("✅ 새 토큰이 성공적으로 발급되었습니다!")
-            print(f"발급된 토큰 (보안상 앞부분만): {access_token[:20]}...")
-            print(f"만료시간: {expires_in}초 (약 {expires_in/3600:.1f}시간)")
-            
-            # Step 3: 발급받은 토큰을 로컬 파일에 저장
-            token_data = {
-                "access_token": access_token,
-                "expires_at": time.time() + expires_in
-            }
-            
-            with open(TOKEN_FILE, 'w', encoding='utf-8') as f:
-                json.dump(token_data, f)
-            print(f"💾 향후 재활용을 위해 토큰을 저장했습니다: {TOKEN_FILE}")
-            
-            return access_token
-        else:
-            print(f"❌ 토큰 발급에 실패했습니다. (HTTP 상태 코드: {res.status_code})")
+        res = requests.post(
+            f"{URL_BASE}/oauth2/tokenP",
+            # headers=headers,
+            data=json.dumps(body),
+            timeout=10,
+        )
+
+        if res.status_code != 200:
+            print(f"토큰 발급에 실패했습니다. HTTP 상태 코드: {res.status_code}")
             print(res.text)
             return None
+
+        data = res.json()
+        access_token = data["access_token"]
+        expires_in = int(data.get("expires_in", 0))
+        token_expired_time = data.get("access_token_token_expired")
+
+        expires_at = _parse_token_expiry(token_expired_time)
+        # 실제 만료 시각이 없을 때만 expires_in으로 만료 시간을 계산합니다.
+        if expires_at is None and expires_in > 0:
+            expires_at = time.time() + expires_in
+
+        print("새 토큰이 성공적으로 발급되었습니다.")
+        print(f"발급된 토큰(앞 20자리): {access_token[:20]}...")
+        print(f"API 응답 만료값(expires_in): {expires_in}초")
+        print(f"실제 만료 시각(원본): {token_expired_time}초")
+        print(f"실제 만료 시각: {_format_expiry(expires_at)}")
+
+        token_data = {
+            "access_token": access_token,
+            "access_token_token_expired": token_expired_time,
+            "expires_at": expires_at,
+        }
+
+        with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+            json.dump(token_data, f, ensure_ascii=False, indent=2)
+
+        print(f"토큰을 {TOKEN_FILE} 파일에 저장했습니다.")
+        return access_token
     except Exception as e:
-        print(f"❌ API 서버 연결 중 오류가 발생했습니다: {e}")
+        print(f"토큰 요청 중 오류가 발생했습니다: {e}")
         return None
 
+
 if __name__ == "__main__":
-    # 스크립트 직접 실행 시 테스트해볼 수 있습니다.
-    token = get_access_token()
+    get_access_token()
