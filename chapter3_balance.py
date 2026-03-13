@@ -23,7 +23,6 @@ Chapter 3: 보유 주식 잔고 및 계좌 요약 조회
 """
 
 import requests
-import json
 from config import APP_KEY, APP_SECRET, URL_BASE, CANO, ACNT_PRDT_CD
 from chapter1_token import get_access_token
 
@@ -41,12 +40,10 @@ def get_my_stocks(token):
         print("🔵 모의투자 모드로 잔고 조회를 요청합니다.")
     
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": tr_id,
-        "custtype": "P"
     }
     
     params = {
@@ -100,10 +97,21 @@ def get_my_stocks(token):
             if 'output2' in data:
                 print("\n================= [계좌 요약 상세] =================")
                 output2 = data['output2']
-                
-                print(f"💵 총 매수금액 (외화): {output2.get('frcr_pchs_amt1')} $")
-                print(f"📈 해외 총 실현손익: {output2.get('ovrs_tot_pfls')} $ ({output2.get('rlzt_erng_rt')}%)")
-                print(f"📊 총 평가손익: {output2.get('tot_evlu_pfls_amt')} $ ({output2.get('tot_pftrt')}%)")
+
+                summary_fields = [
+                    ("frcr_pchs_amt1", "외화매입금액1", "$"),
+                    ("ovrs_rlzt_pfls_amt", "해외실현손익금액", "$"),
+                    ("ovrs_tot_pfls", "해외총손익", "$"),
+                    ("rlzt_erng_rt", "실현수익율", "%"),
+                    ("tot_evlu_pfls_amt", "총평가손익금액", "$"),
+                    ("tot_pftrt", "총수익률", "%"),
+                    ("frcr_buy_amt_smtl1", "외화매수금액합계1", "$"),
+                    ("ovrs_rlzt_pfls_amt2", "해외실현손익금액2", "$"),
+                    ("frcr_buy_amt_smtl2", "외화매수금액합계2", "$"),
+                ]
+
+                for field_name, display_name, unit in summary_fields:
+                    print(f"{display_name}: {output2.get(field_name)} {unit}")
                 print("====================================================")
         
         else:

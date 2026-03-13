@@ -16,7 +16,6 @@ Chapter 2: 해외주식 현재가 체결가 조회
 """
 
 import requests
-import json
 from config import APP_KEY, APP_SECRET, URL_BASE
 from chapter1_token import get_access_token
 
@@ -30,12 +29,10 @@ def get_stock_price(token, symbol="AAPL", market="NAS"):
         market (str): 거래소 코드 (NAS, NYS, AMX)
     """
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
-        "tr_id": "HHDFS00000300",  # 현재가 상세조회를 의미하는 TR_ID
-        "custtype": "P"            # 개인 고객 (B: 법인)
+        "tr_id": "HHDFS00000300",  # 현재가 조회를 의미하는 TR_ID
     }
     
     # URL 쿼리 파라미터 구성
@@ -85,7 +82,6 @@ def get_stock_price_detail(token, symbol="AAPL", market="NAS"):
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": "HHDFS76200200",  # 해외주식 현재가 상세 (상세정보용)
-        "custtype": "P"
     }
     
     params = {

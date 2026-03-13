@@ -81,6 +81,22 @@ def _format_expiry(expires_at):
     return datetime.fromtimestamp(expires_at, KST).strftime("%Y-%m-%d %H:%M:%S KST")
 
 
+def _format_token_expiry_raw(expires_at):
+    if expires_at is None:
+        return None
+    return datetime.fromtimestamp(expires_at, KST).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _get_expiry_roundtrip_info(raw_value, expires_at):
+    restored_expiry_text = _format_token_expiry_raw(expires_at)
+    expiry_roundtrip_matches = (
+        str(raw_value).strip() == restored_expiry_text
+        if raw_value not in (None, "")
+        else False
+    )
+    return restored_expiry_text, expiry_roundtrip_matches
+
+
 def get_access_token():
     """저장된 토큰을 재사용하고, 없거나 만료되면 새로 발급합니다."""
     if not APP_KEY or not APP_SECRET:
@@ -92,14 +108,21 @@ def get_access_token():
             with open(TOKEN_FILE, "r", encoding="utf-8") as f:
                 saved_token = json.load(f)
 
+            saved_token_expired_time = saved_token.get("access_token_token_expired")
             expires_at = _get_saved_token_expiry(saved_token)
+            restored_expiry_text, expiry_roundtrip_matches = _get_expiry_roundtrip_info(
+                saved_token_expired_time, expires_at
+            )
             now = time.time()
 
             # 만료 60초 전까지는 저장된 토큰을 그대로 사용합니다.
             if expires_at is not None and now < expires_at - 60:
                 print("저장된 유효한 토큰을 재사용합니다.")
                 print(f"만료 시각: {_format_expiry(expires_at)}")
-                print(f"남은 시간: {int(expires_at - now)}초")
+                # print(f"남은 시간: {int(expires_at - now)}초")
+                # print(f"저장된 만료 시각(원본): {saved_token_expired_time}")
+                # print(f"저장된 만료 시각(복원): {restored_expiry_text}")
+                # print(f"저장된 만료 시각 왕복 검증: {expiry_roundtrip_matches}")
                 return saved_token.get("access_token")
 
             print("저장된 토큰이 만료되었거나 만료 시각을 확인할 수 없어 새 토큰을 발급합니다.")
@@ -134,6 +157,9 @@ def get_access_token():
         token_expired_time = data.get("access_token_token_expired")
 
         expires_at = _parse_token_expiry(token_expired_time)
+        restored_expiry_text, expiry_roundtrip_matches = _get_expiry_roundtrip_info(
+            token_expired_time, expires_at
+        )
         # 실제 만료 시각이 없을 때만 expires_in으로 만료 시간을 계산합니다.
         if expires_at is None and expires_in > 0:
             expires_at = time.time() + expires_in
@@ -141,8 +167,10 @@ def get_access_token():
         print("새 토큰이 성공적으로 발급되었습니다.")
         print(f"발급된 토큰(앞 20자리): {access_token[:20]}...")
         print(f"API 응답 만료값(expires_in): {expires_in}초")
-        print(f"실제 만료 시각(원본): {token_expired_time}초")
-        print(f"실제 만료 시각: {_format_expiry(expires_at)}")
+        print(f"실제 만료 시각(원본): {token_expired_time}")
+        # print(f"실제 만료 시각: {_format_expiry(expires_at)}")
+        # print(f"실제 만료 시각(복원): {restored_expiry_text}")
+        # print(f"만료 시각 왕복 검증: {expiry_roundtrip_matches}")
 
         token_data = {
             "access_token": access_token,

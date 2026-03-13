@@ -42,12 +42,10 @@ def get_filled_orders(token, start_date=None, end_date=None):
         end_date = today
 
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": tr_id,
-        "custtype": "P"
     }
 
     params = {
@@ -56,8 +54,8 @@ def get_filled_orders(token, start_date=None, end_date=None):
         "PDNO": "%",                   # 종목코드 (전체: "%")
         "ORD_STRT_DT": start_date,     # 조회 시작일
         "ORD_END_DT": end_date,        # 조회 종료일
-        "SLL_BUY_DVSN": "00",          # 구분 (00: 전체, 01: 매도, 02: 매수)
-        "CCLD_NCCS_DVSN": "00",        # 체결결과 (00: 전체, 01: 체결, 02: 미체결)
+        "SLL_BUY_DVSN": "02",          # 구분 (00: 전체, 01: 매도, 02: 매수)
+        "CCLD_NCCS_DVSN": "02",        # 체결결과 (00: 전체, 01: 체결, 02: 미체결)
         "OVRS_EXCG_CD": "%",           # 거래소 (전체: "%")
         "SORT_SQN": "DS",              # 정렬 (DS: 최신순, AS: 오래된순)
         "ORD_DT": "",
@@ -169,10 +167,10 @@ if __name__ == "__main__":
     token = get_access_token()
     if token:
         # 예시 1: 오늘 하루치 내역 조회 (기본값)
-        get_filled_orders(token)
+        # get_filled_orders(token)
 
         # 예시 2: 특정 과거 날짜(최대 3개월) 조회
-        # start_str = "20250101"
-        # end_str = datetime.datetime.now().strftime("%Y%m%d")
-        # print(f"\n🔍 과거 기간 한정({start_str} ~ {end_str}) 내역 호출 테스트:")
-        # get_filled_orders(token, start_date=start_str, end_date=end_str)
+        start_str = "20250101"
+        end_str = datetime.datetime.now().strftime("%Y%m%d")
+        print(f"\n🔍 과거 기간 한정({start_str} ~ {end_str}) 내역 호출 테스트:")
+        get_filled_orders(token, start_date=start_str, end_date=end_str)

@@ -122,12 +122,12 @@ if __name__ == "__main__":
         # 실제로 활성화(미체결)되어 있는 주문 번호가 아니면 API 특성 상 
         # "원주문내역을 찾을 수 없습니다" 등으로 실패합니다.
         
-        target_dummy_order_no = "0030072265"  # 조회해서 얻은 가상의 미체결 원주문번호
+        target_dummy_order_no = "0031219993"  # 조회해서 얻은 가상의 미체결 원주문번호
         test_symbol = "AAPL"
 
         print("=== 1. 활성화된 매수/매도 주문 취소 시도 ===")
         print(" (가상 번호인 경우 원주문번호 조회 실패 에러가 발생하는 것이 정상입니다.)")
-        # amend_cancel_order(token, org_order_no=target_dummy_order_no, symbol=test_symbol, qty=1, price=0, type="CANCEL")
+        amend_cancel_order(token, org_order_no=target_dummy_order_no, symbol=test_symbol, qty=1, price=0, type="CANCEL")
 
         # print("\n=== 2. 활성화된 주문 달러 단가 정정 시도 ===")
-        amend_cancel_order(token, org_order_no=target_dummy_order_no, symbol=test_symbol, qty=1, price=100.0, type="MODIFY")
+        # amend_cancel_order(token, org_order_no=target_dummy_order_no, symbol=test_symbol, qty=1, price=100.0, type="MODIFY")

@@ -32,12 +32,10 @@ def get_pending_orders(token):
         tr_id = "VTTS3018R"
     
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": tr_id,
-        "custtype": "P"
     }
     
     # 미체결 조회 API의 쿼리 스트링 매개변수
@@ -45,7 +43,7 @@ def get_pending_orders(token):
         "CANO": CANO,
         "ACNT_PRDT_CD": ACNT_PRDT_CD,
         "OVRS_EXCG_CD": "NASD",  # 전 시장 통합 "NASD" 
-        "SORT_SQN": "DS",        # DS: 정순 (먼저 주문한 것부터), "": 역순 (최근 주문부터)
+        "SORT_SQN": "DS",        # DS: 정순 (먼저 주문한 것부터), 그외: 역순 (최근 주문부터)
         "CTX_AREA_FK200": "",    # 페이징 시작키
         "CTX_AREA_NK200": ""
     }
@@ -65,7 +63,7 @@ def get_pending_orders(token):
                 
                 print(f"✅ 미체결 대기 주문 건수: 총 {len(orders)}건\n")
                 if not orders:
-                    print("👍 다행히 찌꺼기(미체결) 주문이 남아있지 않습니다.")
+                    print("(미체결) 주문이 남아있지 않습니다.")
                     return
 
                 print(f"{'주문번호(ODNO)':<13} | {'티커':<6} | {'구분':<4} | {'수량':>4} | {'주문단가':>8}")

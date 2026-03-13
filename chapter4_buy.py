@@ -40,7 +40,6 @@ def hashkey(datas):
     Body 데이터를 암호화하여 요청 헤더에 포함합니다. (실전 투자 시 권장됨)
     """
     headers = {
-        "content-type": "application/json",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET
     }
@@ -91,9 +90,7 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
     order_type_names = {
         "00": "지정가(LIMIT)",
         "34": "LOC(장마감지정가)",
-        "33": "MOC(장마감시장가)",
         "32": "LOO(장시작지정가)",
-        "31": "MOO(장시작시장가)"
     }
     order_type_name = order_type_names.get(order_type, f"알 수 없는 유형({order_type})")
     print(f"📋 주문 유형: {order_type_name}")
@@ -111,12 +108,10 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
     }
 
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": tr_id,
-        "custtype": "P"
     }
 
     # 정규장 실전투자 매수일 경우 해시키 추가 적용

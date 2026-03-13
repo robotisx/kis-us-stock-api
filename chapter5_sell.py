@@ -48,7 +48,15 @@ def send_sell_order(token, symbol, qty, price, market="NASD", order_type="00"):
             tr_id = "TTTT1006U"  # 정규장 실전 매도
         url = f"{URL_BASE}/uapi/overseas-stock/v1/trading/order"
         print("🌙 정규장/야간 기반으로 매도 주문을 넣습니다.")
-
+    order_type_names = {
+        "00": "지정가(LIMIT)",
+        "34": "LOC(장마감지정가)",
+        "33": "MOC(장마감시장가)",
+        "32": "LOO(장시작지정가)",
+        "31": "MOO(장시작시장가)"
+    }
+    order_type_name = order_type_names.get(order_type, f"알 수 없는 유형({order_type})")
+    print(f"📋 주문 유형: {order_type_name}")
     # 2. 페이로드 바디 데이터 조립
     data = {
         "CANO": CANO,
@@ -63,12 +71,10 @@ def send_sell_order(token, symbol, qty, price, market="NASD", order_type="00"):
 
     # 3. HTTP 헤더 조립
     headers = {
-        "Content-Type": "application/json",
         "authorization": f"Bearer {token}",
         "appKey": APP_KEY,
         "appsecret": APP_SECRET,
         "tr_id": tr_id,
-        "custtype": "P"
     }
 
     # 4. 해시키 생성 (권장)
