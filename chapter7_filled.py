@@ -8,19 +8,42 @@ Chapter 7: 해외주식 체결 내역 조회 (Filled Orders)
 📌 핵심 포인트:
    1. TR_ID: TTTS3035R (실전) / VTTS3035R (모의)
    2. 조회 기간: 시작일(ORD_STRT_DT)과 종료일(ORD_END_DT)을 
-      YYYYMMDD 형태로 전달해야 하며 최근 3개월 데이터만 조회 가능합니다.
+      YYYYMMDD 형태로 전달해야 합니다.
    3.Pagination(연속조회):
       해외주식 체결 리스트가 길어질 경우, 증권사 서버는 한 번에 모든 데이터를 주지 않습니다.
       응답 헤더의 `tr_cont` 플래그와 `ctx_area_nk200` 키를 재사용하여 
       다음 페이지를 이어받는 로직의 뼈대를 학습합니다.
 """
 
-import requests
-import json
 import datetime
+import requests
 import time
 from config import APP_KEY, APP_SECRET, URL_BASE, CANO, ACNT_PRDT_CD
 from chapter1_token import get_access_token
+
+PAGE_REQUEST_INTERVAL_SECONDS = 0.5
+RATE_LIMIT_RETRY_DELAYS = (1.0, 2.0, 3.0)
+
+
+def _request_filled_orders_page(url, headers, params):
+    for attempt, delay in enumerate((0.0, *RATE_LIMIT_RETRY_DELAYS), start=1):
+        if delay:
+            print(f"   ⏳ 호출 제한 감지로 {delay:.1f}초 대기 후 재시도합니다.")
+            time.sleep(delay)
+
+        res = requests.get(url, headers=headers, params=params, timeout=10)
+
+        if res.status_code != 500:
+            return res
+
+        body_text = res.text or ""
+        if "EGW00201" not in body_text:
+            return res
+
+        if attempt > len(RATE_LIMIT_RETRY_DELAYS):
+            return res
+
+    return res
 
 
 def get_filled_orders(token, start_date=None, end_date=None):
@@ -54,8 +77,8 @@ def get_filled_orders(token, start_date=None, end_date=None):
         "PDNO": "%",                   # 종목코드 (전체: "%")
         "ORD_STRT_DT": start_date,     # 조회 시작일
         "ORD_END_DT": end_date,        # 조회 종료일
-        "SLL_BUY_DVSN": "02",          # 구분 (00: 전체, 01: 매도, 02: 매수)
-        "CCLD_NCCS_DVSN": "02",        # 체결결과 (00: 전체, 01: 체결, 02: 미체결)
+        "SLL_BUY_DVSN": "01",          # 구분 (00: 전체, 01: 매도, 02: 매수)
+        "CCLD_NCCS_DVSN": "00",        # 체결결과 (00: 전체, 01: 체결, 02: 미체결)
         "OVRS_EXCG_CD": "%",           # 거래소 (전체: "%")
         "SORT_SQN": "DS",              # 정렬 (DS: 최신순, AS: 오래된순)
         "ORD_DT": "",
@@ -70,12 +93,12 @@ def get_filled_orders(token, start_date=None, end_date=None):
     print(f"\n===== 📅 체결 내역 조회 ({start_date} ~ {end_date}) =====\n")
 
     all_orders = []
-    max_pages = 10  # 무한루프 방지를 위한 최대 페이지 제한
+    max_pages = 30  # 무한루프 방지를 위한 최대 페이지 제한
     current_page = 1
     
     while current_page <= max_pages:
         print(f"🔄 서버에 데이터 요청 중... (페이지 {current_page}/{max_pages})")
-        res = requests.get(url, headers=headers, params=params, timeout=10)
+        res = _request_filled_orders_page(url, headers, params)
 
         if res.status_code == 200:
             result = res.json()
@@ -103,7 +126,7 @@ def get_filled_orders(token, start_date=None, end_date=None):
                     headers["tr_cont"] = "N" 
                     
                     current_page += 1
-                    time.sleep(0.1)  # API 호출 제한 방지 (Rate Limit) 버퍼 대기
+                    time.sleep(PAGE_REQUEST_INTERVAL_SECONDS)
                 else:
                     break
             else:
@@ -134,6 +157,7 @@ def get_filled_orders(token, start_date=None, end_date=None):
         total_amt = order.get('ft_ccld_amt3', '0')     # 체결 총액
         order_date = order.get('ord_dt', '???')
         order_time = order.get('ord_tmd', '???')
+        source = order.get('mdia_dvsn_name', '???')
 
         print(f"  [{i}] {side} | {symbol} (주문번호: {order_no}) - 처리상태: {status}")
         
@@ -158,6 +182,7 @@ def get_filled_orders(token, start_date=None, end_date=None):
                 print(f"      총 체결금액: ${float(total_amt):,.2f}")
                 
         print(f"      처리 일시: {order_date} {order_time}")
+        print(f"      처리 mdia_dvsn_name: {source}")
         print()
 
 
@@ -169,7 +194,7 @@ if __name__ == "__main__":
         # 예시 1: 오늘 하루치 내역 조회 (기본값)
         # get_filled_orders(token)
 
-        # 예시 2: 특정 과거 날짜(최대 3개월) 조회
+        # 예시 2: 특정 과거 기간 조회
         start_str = "20250101"
         end_str = datetime.datetime.now().strftime("%Y%m%d")
         print(f"\n🔍 과거 기간 한정({start_str} ~ {end_str}) 내역 호출 테스트:")

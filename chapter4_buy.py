@@ -37,7 +37,7 @@ from chapter1_token import get_access_token
 def hashkey(datas):
     """
     정규장 주문 시 보안을 위해 필요한 해시키(Hashkey) 생성 함수입니다.
-    Body 데이터를 암호화하여 요청 헤더에 포함합니다. (실전 투자 시 권장됨)
+    Body 데이터를 암호화하여 요청 헤더에 포함합니다. 
     """
     headers = {
         "appKey": APP_KEY,
@@ -85,7 +85,7 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
         # 야간(정규장) 주문 TR ID (실전투자 기준코드)
         tr_id = "TTTT1002U"
         url = f"{URL_BASE}/uapi/overseas-stock/v1/trading/order"
-        print("🌙 [시간감지] 정규장/미국야간 매수 주문으로 진행합니다.")
+        print("🌙 [시간감지] 프리마켓/정규장/애프터마켓/ 매수 주문으로 진행합니다.")
 
     order_type_names = {
         "00": "지정가(LIMIT)",
@@ -128,7 +128,7 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
             order_no = output['output']['ODNO']
             print(f"✅ 매수 주문 성공! 🥳 (부여된 주문번호: {order_no})")
             if order_type == "34":
-                print(f"   ⏰ LOC 주문 특성상 장 마감 시간인 새벽(KST 06:00경) 직후 체결 여부가 확정됩니다.")
+                print(f"   ⏰ LOC 주문 특성상 장 마감 시간인 새벽(KST 052:00경) 직후 체결 여부가 확정됩니다.")
             return order_no
         else:
             print(f"❌ 매수 요청 실패 (API 서버 응답): {output['msg1']}")
@@ -138,24 +138,10 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
 
     return None
 
-def explain_order_types():
-    """초보자를 위한 주요 주문 유형 설명 테이블 출력"""
-    print("""
-╔════════════════════════════════════════════════════════════╗
-║                  📋 매수 주문 유형 요약 가이드             ║
-╠═══════════╦══════╦═════════════════════════════════════════╣
-║   유형    ║ 코드 ║                주요 특징                ║
-╠═══════════╬══════╬═════════════════════════════════════════╣
-║  LIMIT    ║  00  ║ 지정가 (일반) 지정 단가 도달 시 체결    ║
-║  LOO      ║  32  ║ 장시작지정가 (장 개장 순간에만 판단)    ║
-║  LOC      ║  34  ║ 장마감지정가 (장 마감 순간 종가로 판단) ║
-╚═══════════╩══════╩═════════════════════════════════════════╝
-💡 KIS API 모의투자에서는 현재 지정가(00) 주문만 허용됩니다.
-    """)
+
 
 if __name__ == "__main__":
-    explain_order_types()
-
+    
     token = get_access_token()
     if token:
         # [주의] 이 스크립트를 직접 실행하면 실제로 주문이 들어갑니다!
