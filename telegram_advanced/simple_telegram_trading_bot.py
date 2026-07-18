@@ -49,6 +49,12 @@ if hasattr(sys.stdout, "reconfigure"):
 load_dotenv()
 CONFIG = load_config() or {}
 
+# # ==================== [강의 실습 1단계: 실행 중 모드 상태 만들기 시작] ====================
+# # 이 구간 전체를 선택해 주석을 한 번 해제합니다.
+# # None이면 .env/config.yaml 설정을 따르고, True면 DRY-RUN, False면 LIVE를 강제합니다.
+# RUNTIME_DRY_RUN: bool | None = None
+# # ==================== [강의 실습 1단계: 실행 중 모드 상태 만들기 끝] ======================
+
 TELEGRAM_API_BASE = "https://api.telegram.org/bot{token}/{method}"
 POLL_TIMEOUT_SECONDS = 20
 MAX_MESSAGE_LENGTH = 3900
@@ -57,6 +63,10 @@ CommandHandler = Callable[[list[str], str, str | None], str]
 
 BOT_COMMANDS = [
     {"command": "help", "description": "명령어 도움말"},
+    # # ==================== [강의 실습 3단계: Telegram 메뉴 등록 시작] ====================
+    # # 주석을 해제하면 Telegram 명령어 메뉴에 /mode가 표시됩니다.
+    # {"command": "mode", "description": "실행 모드 확인 및 변경"},
+    # # ==================== [강의 실습 3단계: Telegram 메뉴 등록 끝] ======================
     {"command": "price", "description": "현재가 조회"},
     {"command": "balance", "description": "잔고 조회"},
     {"command": "buy", "description": "매수 주문"},
@@ -89,6 +99,36 @@ def live_trading() -> bool:
     if isinstance(value, bool):
         return value
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+# # ==================== [강의 실습 2단계: 모드 판정 함수 확장 시작] ====================
+# # 기존 live_trading() 아래에서 아래 코드를 활성화하면 같은 이름의 함수가 새 정의로 교체됩니다.
+# # 실행 중 변경한 값이 있으면 우선 사용하고, 없으면 .env/config.yaml 설정을 사용합니다.
+# def configured_live_trading() -> bool:
+#     value = os.getenv("TELEGRAM_TRADING_LIVE")
+#     if value is None:
+#         value = CONFIG.get("TELEGRAM_TRADING_LIVE", False)
+#     if isinstance(value, bool):
+#         return value
+#     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+#
+#
+# def live_trading() -> bool:
+#     if RUNTIME_DRY_RUN is not None:
+#         return not RUNTIME_DRY_RUN
+#     return configured_live_trading()
+#
+#
+# def set_runtime_dry_run(enabled: bool | None) -> None:
+#     global RUNTIME_DRY_RUN
+#     RUNTIME_DRY_RUN = enabled
+#
+#
+# def trading_mode_source() -> str:
+#     if RUNTIME_DRY_RUN is not None:
+#         return "현재 프로세스의 runtime override"
+#     return ".env 또는 config.yaml 설정"
+# # ==================== [강의 실습 2단계: 모드 판정 함수 확장 끝] ======================
 
 
 def call_telegram(method: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -171,8 +211,27 @@ def dry_run_message(title: str) -> str:
     )
 
 
+# # ==================== [강의 실습 6단계: DRY-RUN 안내문 변경 시작] ====================
+# # /mode 기능을 추가한 뒤에는 환경변수 수정 안내 대신 현재 모드 확인 방법을 보여줍니다.
+# def dry_run_message(title: str) -> str:
+#     return (
+#         "DRY-RUN 모드입니다.\n"
+#         "실제 주문은 전송하지 않았습니다.\n\n"
+#         f"{title}\n\n"
+#         "현재 모드는 /mode 명령으로 확인할 수 있습니다."
+#     )
+# # ==================== [강의 실습 6단계: DRY-RUN 안내문 변경 끝] ======================
+
+
 def _handle_help(parts: list[str], chat_id: str, token: str | None) -> str:
     return simple_telegram_commands.handle_help(_telegram_context(), parts, chat_id, token)
+
+
+# # ==================== [강의 실습 4단계: /mode 연결 함수 추가 시작] ====================
+# # Telegram 명령을 simple_telegram_commands.handle_mode()로 전달합니다.
+# def _handle_mode(parts: list[str], chat_id: str, token: str | None) -> str:
+#     return simple_telegram_commands.handle_mode(_telegram_context(), parts, chat_id, token)
+# # ==================== [강의 실습 4단계: /mode 연결 함수 추가 끝] ======================
 
 
 def _handle_balance(parts: list[str], chat_id: str, token: str | None) -> str:
@@ -202,6 +261,10 @@ def _handle_cancel(parts: list[str], chat_id: str, token: str | None) -> str:
 COMMANDS: dict[str, CommandHandler] = {
     "/start": _handle_help,
     "/help": _handle_help,
+    # # ==================== [강의 실습 5단계: /mode 라우팅 등록 시작] ====================
+    # # 주석을 해제하면 사용자가 보낸 /mode 명령이 _handle_mode()로 연결됩니다.
+    # "/mode": _handle_mode,
+    # # ==================== [강의 실습 5단계: /mode 라우팅 등록 끝] ======================
     "/price": _handle_price,
     "/balance": _handle_balance,
     "/buy": _handle_buy,
@@ -278,6 +341,19 @@ def startup_message() -> str:
         f"현재 실행 모드: {mode}\n\n"
         "명령어 도움말: /help"
     )
+
+
+# # ==================== [강의 실습 7단계: 시작 메시지 변경 시작] ====================
+# # 봇이 시작될 때 /mode 명령도 함께 안내하도록 함수를 새 정의로 교체합니다.
+# def startup_message() -> str:
+#     mode = "LIVE" if live_trading() else "DRY-RUN"
+#     return (
+#         "Simple Telegram bot started.\n"
+#         f"현재 실행 모드: {mode}\n\n"
+#         "명령어 도움말: /help\n"
+#         "모드 확인 및 변경: /mode"
+#     )
+# # ==================== [강의 실습 7단계: 시작 메시지 변경 끝] ======================
 
 
 def run_bot() -> None:

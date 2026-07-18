@@ -25,8 +25,85 @@ AMEX = 아멕스
 """
 
 
+# # ==================== [강의 실습 8단계: 도움말에 /mode 추가 시작] ====================
+# # 기존 build_help_text() 아래에서 활성화하면 /help 응답에 모드 명령과 안전 설명이 추가됩니다.
+# def build_help_text(ctx) -> str:
+#     mode = "LIVE" if ctx.live_trading() else "DRY-RUN"
+#     return f"""간단 Telegram 주문 봇 ({mode})
+#
+# 명령어:
+# /help
+# /mode
+# /mode dry on
+# /mode dry off
+# /price AAPL [NAS]
+# /balance
+# /buy AAPL 1 50.00 [NASD] [00]
+# /sell AAPL 1 500.00 [NASD] [00]
+# /modify 31372145 AAPL 1 55.00 [NASD]
+# /cancel 31372145 AAPL 1 [NASD]
+#
+# 시장 코드:
+# NASD = 나스닥
+# NYSE = 뉴욕증권거래소
+# AMEX = 아멕스
+#
+# 안전 설정:
+# - 기본값은 DRY-RUN입니다.
+# - /mode로 현재 모드와 설정 출처를 확인합니다.
+# - /mode dry on으로 현재 프로세스의 DRY-RUN을 켭니다.
+# - /mode dry off로 DRY-RUN을 끄고 LIVE로 전환합니다.
+# - LIVE에서는 주문 명령이 현재 설정된 KIS 계좌 API로 전송됩니다.
+# """
+# # ==================== [강의 실습 8단계: 도움말에 /mode 추가 끝] ======================
+
+
 def handle_help(ctx, parts, chat_id, token) -> str:
     return build_help_text(ctx)
+
+
+# # ==================== [강의 실습 9단계: /mode 명령 처리 시작] ====================
+# # 인자가 없으면 현재 모드를 보여주고, dry on/off로 실행 중 모드를 변경합니다.
+# # 변경값은 메모리에만 있으므로 봇을 재시작하면 .env/config.yaml 설정으로 돌아갑니다.
+# def handle_mode(ctx, parts, chat_id, token) -> str:
+#     args = [part.lower() for part in parts[1:]]
+#
+#     if not args:
+#         mode = "LIVE" if ctx.live_trading() else "DRY-RUN"
+#         return (
+#             f"현재 실행 모드: {mode}\n"
+#             f"상태 출처: {ctx.trading_mode_source()}\n\n"
+#             "사용법:\n"
+#             "/mode\n"
+#             "/mode dry on\n"
+#             "/mode dry off"
+#         )
+#
+#     if args == ["dry", "on"]:
+#         ctx.set_runtime_dry_run(True)
+#         return (
+#             "DRY-RUN을 켰습니다.\n\n"
+#             "실제 주문은 전송되지 않습니다.\n"
+#             "상태 출처: 현재 프로세스의 runtime override\n"
+#             "봇을 재시작하면 .env 또는 config.yaml 설정으로 돌아갑니다."
+#         )
+#
+#     if args == ["dry", "off"]:
+#         ctx.set_runtime_dry_run(False)
+#         return (
+#             "DRY-RUN을 껐습니다. 현재 모드는 LIVE입니다.\n\n"
+#             "주의: 이후 주문 명령은 현재 설정된 KIS 계좌 API로 전송됩니다.\n"
+#             "상태 출처: 현재 프로세스의 runtime override\n"
+#             "봇을 재시작하면 .env 또는 config.yaml 설정으로 돌아갑니다."
+#         )
+#
+#     return (
+#         "모드 명령 사용법\n\n"
+#         "/mode\n"
+#         "/mode dry on\n"
+#         "/mode dry off"
+#     )
+# # ==================== [강의 실습 9단계: /mode 명령 처리 끝] ======================
 
 
 def price_usage() -> str:
