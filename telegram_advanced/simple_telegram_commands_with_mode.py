@@ -1,9 +1,3 @@
-"""Command handlers for simple_telegram_trading_bot_with_mode.py.
-
-This is the completed lecture example with ``/mode`` support. The original
-``simple_telegram_commands.py`` remains the before-version used in the lesson.
-"""
-
 from __future__ import annotations
 
 
@@ -42,8 +36,6 @@ def handle_help(ctx, parts, chat_id, token) -> str:
 
 
 def handle_mode(ctx, parts, chat_id, token) -> str:
-    """Show or change the in-memory DRY-RUN override."""
-
     args = [part.lower() for part in parts[1:]]
 
     if not args:

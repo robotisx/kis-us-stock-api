@@ -67,8 +67,6 @@ BOT_COMMANDS = [
 
 
 def _telegram_context():
-    """Return this module so command handlers can use shared runtime helpers."""
-
     return sys.modules[__name__]
 
 
@@ -256,14 +254,10 @@ def poll_updates(offset: int | None) -> list[dict[str, Any]]:
 
 
 def delete_webhook_for_polling() -> None:
-    """Clear webhook mode before using getUpdates polling."""
-
     call_telegram("deleteWebhook", {"drop_pending_updates": False})
 
 
 def sync_bot_commands() -> None:
-    """Register slash commands in the Telegram client command menu."""
-
     call_telegram("setMyCommands", {"commands": BOT_COMMANDS})
 
 

@@ -1,10 +1,3 @@
-"""Command handlers for simple_telegram_trading_bot.py.
-
-Handlers in this module receive the main bot module as ``ctx``. Shared runtime
-helpers, broker API wrappers, and configuration checks stay in the main module;
-each handler focuses on parsing one Telegram command and returning a reply.
-"""
-
 from __future__ import annotations
 
 

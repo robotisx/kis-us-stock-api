@@ -49,7 +49,6 @@ if hasattr(sys.stdout, "reconfigure"):
 load_dotenv()
 CONFIG = load_config() or {}
 
-# None: use .env/config.yaml, True: force DRY-RUN, False: force LIVE.
 RUNTIME_DRY_RUN: bool | None = None
 
 TELEGRAM_API_BASE = "https://api.telegram.org/bot{token}/{method}"
@@ -71,8 +70,6 @@ BOT_COMMANDS = [
 
 
 def _telegram_context():
-    """Return this module so command handlers can use shared runtime helpers."""
-
     return sys.modules[__name__]
 
 
@@ -91,8 +88,6 @@ def allowed_chat_id() -> str:
 
 
 def configured_live_trading() -> bool:
-    """Read the persistent LIVE setting from env first, then config.yaml."""
-
     value = os.getenv("TELEGRAM_TRADING_LIVE")
     if value is None:
         value = CONFIG.get("TELEGRAM_TRADING_LIVE", False)
@@ -102,16 +97,12 @@ def configured_live_trading() -> bool:
 
 
 def live_trading() -> bool:
-    """Return the effective mode, giving the runtime override priority."""
-
     if RUNTIME_DRY_RUN is not None:
         return not RUNTIME_DRY_RUN
     return configured_live_trading()
 
 
 def set_runtime_dry_run(enabled: bool | None) -> None:
-    """Set or clear the in-memory DRY-RUN override."""
-
     global RUNTIME_DRY_RUN
     RUNTIME_DRY_RUN = enabled
 
@@ -290,14 +281,10 @@ def poll_updates(offset: int | None) -> list[dict[str, Any]]:
 
 
 def delete_webhook_for_polling() -> None:
-    """Clear webhook mode before using getUpdates polling."""
-
     call_telegram("deleteWebhook", {"drop_pending_updates": False})
 
 
 def sync_bot_commands() -> None:
-    """Register slash commands in the Telegram client command menu."""
-
     call_telegram("setMyCommands", {"commands": BOT_COMMANDS})
 
 
