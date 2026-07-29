@@ -16,10 +16,10 @@ Chapter 5: 해외주식 매도 주문
 
 import requests
 import json
-import datetime
 from config import APP_KEY, APP_SECRET, URL_BASE, CANO, ACNT_PRDT_CD
 from chapter1_token import get_access_token
 from chapter4_buy import hashkey
+from market_hours import is_us_daytime_trading_time
 
 def send_sell_order(token, symbol, qty, price, market="NASD", order_type="00"):
     """
@@ -32,8 +32,7 @@ def send_sell_order(token, symbol, qty, price, market="NASD", order_type="00"):
         print("❌ 매도 수량 또는 단가의 형식이 올바르지 않습니다.")
         return None
 
-    now = datetime.datetime.now()
-    is_daytime = 10 <= now.hour < 18
+    is_daytime = is_us_daytime_trading_time()
 
     # 1. TR_ID 세팅 (매수와 코드가 구별됨을 주의하세요!)
     if is_daytime:

@@ -30,9 +30,9 @@ Chapter 4: 해외주식 매수 주문 (지정가 및 LOC 장마감지정가)
 
 import requests
 import json
-import datetime
 from config import APP_KEY, APP_SECRET, URL_BASE, CANO, ACNT_PRDT_CD
 from chapter1_token import get_access_token
+from market_hours import is_us_daytime_trading_time
 
 def hashkey(datas):
     """
@@ -69,8 +69,7 @@ def send_buy_order(token, symbol, qty, price, market="NASD", order_type="00"):
         print("❌ 수량 또는 가격 숫자로 변환하는 데 실패했습니다.")
         return None
 
-    now = datetime.datetime.now()
-    is_daytime = 10 <= now.hour < 18  # KST 기준 대략적인 주간거래 시간
+    is_daytime = is_us_daytime_trading_time()
 
     if is_daytime:
         tr_id = "TTTS6036U"
