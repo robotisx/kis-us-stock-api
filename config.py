@@ -16,18 +16,18 @@ def load_config():
     return config
 
 # 설정 로드 및 전역 변수 할당
-_cfg = load_config()
+CONFIG = load_config() or {}
 
-if _cfg:
-    APP_KEY = _cfg.get('APP_KEY')
-    APP_SECRET = _cfg.get('APP_SECRET')
-    URL_BASE = _cfg.get('URL_BASE')
-    CANO = _cfg.get('CANO')
-    ACNT_PRDT_CD = _cfg.get('ACNT_PRDT_CD')
+if CONFIG:
+    APP_KEY = CONFIG.get('APP_KEY')
+    APP_SECRET = CONFIG.get('APP_SECRET')
+    URL_BASE = CONFIG.get('URL_BASE')
+    CANO = CONFIG.get('CANO')
+    ACNT_PRDT_CD = CONFIG.get('ACNT_PRDT_CD')
     
     # 텔레그램 연동(선택사항)용 설정
-    TELEGRAM_TOKEN = _cfg.get('TELEGRAM_TOKEN')
-    TELEGRAM_CHAT_ID = _cfg.get('TELEGRAM_CHAT_ID')
+    TELEGRAM_TOKEN = CONFIG.get('TELEGRAM_TOKEN')
+    TELEGRAM_CHAT_ID = CONFIG.get('TELEGRAM_CHAT_ID')
 else:
     APP_KEY = None
     APP_SECRET = None

@@ -15,8 +15,6 @@ The mode override is held in memory. Restarting the process clears it and makes
 the bot follow TELEGRAM_TRADING_LIVE from .env or config.yaml again.
 """
 
-from __future__ import annotations
-
 import io
 import os
 import sys
@@ -38,7 +36,7 @@ from chapter3_balance import get_my_stocks
 from chapter4_buy import send_buy_order
 from chapter5_sell import send_sell_order
 from chapter8_amend_cancel import amend_cancel_order
-from config import TELEGRAM_CHAT_ID, TELEGRAM_TOKEN, load_config
+from config import CONFIG, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -47,7 +45,6 @@ if hasattr(sys.stdout, "reconfigure"):
 
 
 load_dotenv()
-CONFIG = load_config() or {}
 
 RUNTIME_DRY_RUN: bool | None = None
 

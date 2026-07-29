@@ -15,8 +15,6 @@ Telegram 명령:
 실제 주문까지 보내려면 .env 또는 config.yaml에 TELEGRAM_TRADING_LIVE=true 를 넣으세요.
 """
 
-from __future__ import annotations
-
 import io
 import os
 import sys
@@ -38,7 +36,7 @@ from chapter3_balance import get_my_stocks
 from chapter4_buy import send_buy_order
 from chapter5_sell import send_sell_order
 from chapter8_amend_cancel import amend_cancel_order
-from config import TELEGRAM_CHAT_ID, TELEGRAM_TOKEN, load_config
+from config import CONFIG, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -47,7 +45,6 @@ if hasattr(sys.stdout, "reconfigure"):
 
 
 load_dotenv()
-CONFIG = load_config() or {}
 
 # # ==================== [강의 실습 1단계: 실행 중 모드 상태 만들기 시작] ====================
 # # 이 구간 전체를 선택해 주석을 한 번 해제합니다.

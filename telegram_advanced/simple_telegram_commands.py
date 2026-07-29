@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def build_help_text(ctx) -> str:
     mode = "LIVE" if ctx.live_trading() else "DRY-RUN"
     return f"""간단 Telegram 주문 봇 ({mode})
