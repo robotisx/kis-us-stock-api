@@ -1,16 +1,22 @@
+from pathlib import Path
+
 import yaml
-import os
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+CONFIG_PATH = PROJECT_ROOT / "config.yaml"
+
 
 def load_config():
     """
     config.yaml 파일에서 한국투자증권 API 키 및 계좌 정보를 로드합니다.
     강의 실습을 위해 프로젝트 루트에 config.yaml 파일이 준비되어 있어야 합니다.
     """
-    if not os.path.exists('config.yaml'):
-        print("❌ config.yaml 파일을 찾을 수 없습니다. (발급받은 API 키를 설정해주세요)")
+    if not CONFIG_PATH.is_file():
+        print("[오류] config.yaml 파일을 찾을 수 없습니다. (발급받은 API 키를 설정해주세요)")
         return None
         
-    with open('config.yaml', 'r', encoding='utf-8') as f:
+    with CONFIG_PATH.open('r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
         
     return config

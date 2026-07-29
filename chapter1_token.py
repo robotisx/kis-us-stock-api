@@ -36,13 +36,14 @@ ACNT_PRDT_CD: '01'
 """
 
 import json
-import os
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
 import requests
 from config import APP_KEY, APP_SECRET, URL_BASE
 
-TOKEN_FILE = "token.json"
+TOKEN_FILE = Path(__file__).resolve().with_name("token.json")
 KST = timezone(timedelta(hours=9))
 
 
@@ -103,9 +104,9 @@ def get_access_token():
         print("config.yaml에서 APP_KEY 또는 APP_SECRET을 찾을 수 없습니다.")
         return None
 
-    if os.path.exists(TOKEN_FILE):
+    if TOKEN_FILE.exists():
         try:
-            with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+            with TOKEN_FILE.open("r", encoding="utf-8") as f:
                 saved_token = json.load(f)
 
             saved_token_expired_time = saved_token.get("access_token_token_expired")
@@ -178,7 +179,7 @@ def get_access_token():
             "expires_at": expires_at,
         }
 
-        with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+        with TOKEN_FILE.open("w", encoding="utf-8") as f:
             json.dump(token_data, f, ensure_ascii=False, indent=2)
 
         print(f"토큰을 {TOKEN_FILE} 파일에 저장했습니다.")
